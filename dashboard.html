@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --success-color: #2ecc71;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .main-container {
+            display: block;
+        }
+
+        .sidebar {
+            background-color: var(--secondary-color);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            padding-top: 20px;
+            transition: all 0.3s;
+            width: 250px;
+            z-index: 1000;
+        }
+
+        .sidebar .nav-link {
+            color: #bdc3c7;
+            padding: 12px 20px;
+            margin: 5px 0;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .content {
+            margin-left: 250px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .navbar {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .stat-card i {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .stat-card .count {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .stat-card .label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .book-card {
+            height: 100%;
+        }
+
+        .book-card img {
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .book-actions {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 12px;
+            color: #7f8c8d;
+        }
+
+        .search-box input {
+            padding-left: 40px;
+        }
+
+        .modal-header {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* Chart containers */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .chart-card {
+            height: 100%;
+        }
+
+        .chart-card .card-body {
+            padding: 20px;
+        }
+
+        /* Graph controls */
+        .graph-controls {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .time-filter {
+            display: flex;
+            gap: 5px;
+        }
+
+        .time-filter-btn {
+            padding: 5px 10px;
+            border: 1px solid #dee2e6;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.8rem;
+        }
+
+        .time-filter-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .time-filter-btn:hover {
+            background: #e9ecef;
+        }
+
+        /* Analytics section */
+        .analytics-section {
+            margin-top: 30px;
+        }
+
+        .analytics-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                text-align: center;
+            }
+
+            .sidebar .nav-link span {
+                display: none;
+            }
+
+            .sidebar .nav-link i {
+                margin-right: 0;
+                font-size: 1.2rem;
+            }
+
+            .content {
+                margin-left: 70px;
+            }
+
+            .chart-container {
+                height: 250px;
+            }
+            
+            .analytics-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Main Application -->
+    <div id="mainApp" class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="position-sticky">
+                <div class="text-center mb-4">
+                    <h4 class="text-white">Dashboard</h4>
+                </div>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" data-page="dashboard">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="books">
+                            <i class="fas fa-book"></i>
+                            <span>Book Management</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="add-book">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Add New Book</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="book-operations">
+                            <i class="fas fa-edit"></i>
+                            <span>Edit/Delete Books</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="categories">
+                            <i class="fas fa-tags"></i>
+                            <span>Categories</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="users">
+                            <i class="fas fa-users"></i>
+                            <span>Users</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="reports">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Reports</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <!-- Navbar -->
+            <nav class="navbar navbar-expand-lg">
+                <div class="container-fluid">
+                    <button class="navbar-toggler" type="button">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="d-flex align-items-center">
+                        <div class="search-box me-3">
+                            <i class="fas fa-search"></i>
+                            <input type="text" class="form-control" placeholder="Search...">
+                        </div>
+                        <div class="dropdown">
+                            <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle"
+                                id="userDropdown" data-bs-toggle="dropdown">
+                                <img src="https://via.placeholder.com/40" alt="User" width="40" height="40"
+                                    class="rounded-circle me-2">
+                                <span>Admin User</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#">Profile</a></li>
+                                <li><a class="dropdown-item" href="logindasboard.html">Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Dashboard Page -->
+            <div id="dashboardPage" class="page-content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Dashboard</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button class="btn btn-sm btn-outline-secondary" id="exportReportBtn">
+                            <i class="fas fa-download"></i> Export Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card stat-card text-white bg-primary">
+                            <div class="card-body">
+                                <i class="fas fa-book"></i>
+                                <div class="count" id="totalBooksCount">0</div>
+                                <div class="label">Total Books</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card stat-card text-white bg-success">
+                            <div class="card-body">
+                                <i class="fas fa-users"></i>
+                                <div class="count" id="totalUsersCount">542</div>
+                                <div class="label">Registered Users</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card stat-card text-white bg-warning">
+                            <div class="card-body">
+                                <i class="fas fa-shopping-cart"></i>
+                                <div class="count" id="borrowedBooksCount">0</div>
+                                <div class="label">Books Borrowed</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card stat-card text-white bg-danger">
+                            <div class="card-body">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <div class="count" id="overdueBooksCount">12</div>
+                                <div class="label">Overdue Books</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Section -->
+                <div class="analytics-section">
+                    <div class="analytics-header">
+                        <h3>Library Analytics</h3>
+                        <div class="time-filter">
+                            <button class="time-filter-btn active" data-period="week">Week</button>
+                            <button class="time-filter-btn" data-period="month">Month</button>
+                            <button class="time-filter-btn" data-period="year">Year</button>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Books by Category Chart -->
+                        <div class="col-md-6">
+                            <div class="card chart-card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Books by Category</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="categoryChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Book Status Distribution -->
+                        <div class="col-md-6">
+                            <div class="card chart-card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Book Status Distribution</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="statusChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <!-- Monthly Borrowing Trends -->
+                        <div class="col-md-8">
+                            <div class="card chart-card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Monthly Borrowing Trends</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="borrowingTrendsChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Popular Categories -->
+                        <div class="col-md-4">
+                            <div class="card chart-card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Popular Categories</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container">
+                                        <canvas id="popularCategoriesChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity Section -->
+                <div class="row mt-4">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Recent Activity</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>User</th>
+                                                <th>Action</th>
+                                                <th>Book</th>
+                                                <th>Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="recentActivityBody">
+                                            <!-- Recent activity will be populated by JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Popular Books</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush" id="popularBooksList">
+                                    <!-- Popular books will be populated by JavaScript -->
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Book Management Page -->
+            <div id="booksPage" class="page-content" style="display: none;">
+                <div
+                    class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Book Management</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addBookModal">
+                            <i class="fas fa-plus"></i> Add New Book
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" class="form-control" id="bookSearch" placeholder="Search books...">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="categoryFilter">
+                            <option value="">All Categories</option>
+                            <option value="Fiction">Fiction</option>
+                            <option value="Non-Fiction">Non-Fiction</option>
+                            <option value="Science">Science</option>
+                            <option value="Technology">Technology</option>
+                            <option value="History">History</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="statusFilter">
+                            <option value="">All Status</option>
+                            <option value="Available">Available</option>
+                            <option value="Borrowed">Borrowed</option>
+                            <option value="Reserved">Reserved</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Cover</th>
+                                        <th>Title</th>
+                                        <th>Author</th>
+                                        <th>Category</th>
+                                        <th>ISBN</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="booksTableBody">
+                                    <!-- Books will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <nav aria-label="Book pagination">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" tabindex="-1">Previous</a>
+                                </li>
+                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Book Page -->
+            <div id="add-bookPage" class="page-content" style="display: none;">
+                <div
+                    class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Add New Book</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button class="btn btn-sm btn-outline-primary" id="manageBooksBtn">
+                            <i class="fas fa-edit"></i> Manage Books
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-8 mx-auto">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Book Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="addBookFormPage">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="bookTitlePage" class="form-label">Title <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="bookTitlePage" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="bookAuthorPage" class="form-label">Author <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="bookAuthorPage" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="bookIsbnPage" class="form-label">ISBN <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="bookIsbnPage" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="bookCategoryPage" class="form-label">Category <span
+                                                        class="text-danger">*</span></label>
+                                                <select class="form-select" id="bookCategoryPage" required>
+                                                    <option value="">Select Category</option>
+                                                    <option value="Fiction">Fiction</option>
+                                                    <option value="Non-Fiction">Non-Fiction</option>
+                                                    <option value="Science">Science</option>
+                                                    <option value="Technology">Technology</option>
+                                                    <option value="History">History</option>
+                                                    <option value="Biography">Biography</option>
+                                                    <option value="Children">Children</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="bookStatusPage" class="form-label">Status <span
+                                                        class="text-danger">*</span></label>
+                                                <select class="form-select" id="bookStatusPage" required>
+                                                    <option value="Available">Available</option>
+                                                    <option value="Borrowed">Borrowed</option>
+                                                    <option value="Reserved">Reserved</option>
+                                                    <option value="Maintenance">Maintenance</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="bookCoverPage" class="form-label">Cover Image URL</label>
+                                                <input type="text" class="form-control" id="bookCoverPage"
+                                                    placeholder="https://example.com/image.jpg">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="bookDescriptionPage" class="form-label">Description</label>
+                                        <textarea class="form-control" id="bookDescriptionPage" rows="4"
+                                            placeholder="Enter book description..."></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="bookPublisherPage" class="form-label">Publisher</label>
+                                        <input type="text" class="form-control" id="bookPublisherPage">
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="bookPublishedDatePage" class="form-label">Published
+                                                    Date</label>
+                                                <input type="date" class="form-control" id="bookPublishedDatePage">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="bookPagesPage" class="form-label">Number of Pages</label>
+                                                <input type="number" class="form-control" id="bookPagesPage" min="1">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="bookLanguagePage" class="form-label">Language</label>
+                                        <select class="form-select" id="bookLanguagePage">
+                                            <option value="English">English</option>
+                                            <option value="Spanish">Spanish</option>
+                                            <option value="French">French</option>
+                                            <option value="German">German</option>
+                                            <option value="Chinese">Chinese</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                        <button type="reset" class="btn btn-secondary me-md-2">Reset</button>
+                                        <button type="submit" class="btn btn-primary">Add Book</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit/Delete Books Page -->
+            <div id="book-operationsPage" class="page-content" style="display: none;">
+                <div
+                    class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Edit/Delete Books</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addBookModal">
+                            <i class="fas fa-plus"></i> Add New Book
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Cover</th>
+                                        <th>Title</th>
+                                        <th>Author</th>
+                                        <th>Category</th>
+                                        <th>ISBN</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="editBooksTableBody">
+                                    <!-- Books will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other pages would go here -->
+            <div id="categoriesPage" class="page-content" style="display: none;">
+                <h1>Categories Page</h1>
+                <p>This is the categories management page.</p>
+            </div>
+
+            <div id="usersPage" class="page-content" style="display: none;">
+                <h1>Users Page</h1>
+                <p>This is the users management page.</p>
+            </div>
+
+            <div id="reportsPage" class="page-content" style="display: none;">
+                <h1>Reports Page</h1>
+                <p>This is the reports page.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Book Modal -->
+    <div class="modal fade" id="addBookModal" tabindex="-1" aria-labelledby="addBookModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addBookModalLabel">Add New Book</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addBookForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="bookTitle" class="form-label">Title</label>
+                                    <input type="text" class="form-control" id="bookTitle" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="bookAuthor" class="form-label">Author</label>
+                                    <input type="text" class="form-control" id="bookAuthor" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="bookIsbn" class="form-label">ISBN</label>
+                                    <input type="text" class="form-control" id="bookIsbn" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="bookCategory" class="form-label">Category</label>
+                                    <select class="form-select" id="bookCategory" required>
+                                        <option value="">Select Category</option>
+                                        <option value="Fiction">Fiction</option>
+                                        <option value="Non-Fiction">Non-Fiction</option>
+                                        <option value="Science">Science</option>
+                                        <option value="Technology">Technology</option>
+                                        <option value="History">History</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="bookStatus" class="form-label">Status</label>
+                                    <select class="form-select" id="bookStatus" required>
+                                        <option value="Available">Available</option>
+                                        <option value="Borrowed">Borrowed</option>
+                                        <option value="Reserved">Reserved</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="bookCover" class="form-label">Cover Image URL</label>
+                                    <input type="text" class="form-control" id="bookCover">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bookDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="bookDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveBookBtn">Save Book</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Book Modal -->
+    <div class="modal fade" id="editBookModal" tabindex="-1" aria-labelledby="editBookModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editBookModalLabel">Edit Book</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editBookForm">
+                        <input type="hidden" id="editBookId">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editBookTitle" class="form-label">Title</label>
+                                    <input type="text" class="form-control" id="editBookTitle" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editBookAuthor" class="form-label">Author</label>
+                                    <input type="text" class="form-control" id="editBookAuthor" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editBookIsbn" class="form-label">ISBN</label>
+                                    <input type="text" class="form-control" id="editBookIsbn" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editBookCategory" class="form-label">Category</label>
+                                    <select class="form-select" id="editBookCategory" required>
+                                        <option value="">Select Category</option>
+                                        <option value="Fiction">Fiction</option>
+                                        <option value="Non-Fiction">Non-Fiction</option>
+                                        <option value="Science">Science</option>
+                                        <option value="Technology">Technology</option>
+                                        <option value="History">History</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editBookStatus" class="form-label">Status</label>
+                                    <select class="form-select" id="editBookStatus" required>
+                                        <option value="Available">Available</option>
+                                        <option value="Borrowed">Borrowed</option>
+                                        <option value="Reserved">Reserved</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editBookCover" class="form-label">Cover Image URL</label>
+                                    <input type="text" class="form-control" id="editBookCover">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editBookDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="editBookDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="updateBookBtn">Update Book</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Book Management System - Main Application
+        class BookManager {
+            constructor() {
+                this.books = this.loadBooksFromStorage();
+                this.charts = {};
+                this.currentPeriod = 'week';
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.renderBooksTable();
+                this.updateDashboard();
+                this.initializeCharts();
+            }
+
+            loadBooksFromStorage() {
+                const storedBooks = localStorage.getItem('libraryBooks');
+                if (storedBooks) {
+                    return JSON.parse(storedBooks);
+                } else {
+                    // Initial sample data
+                    const sampleBooks = [
+                        {
+                            id: 1,
+                            title: "The Great Gatsby",
+                            author: "F. Scott Fitzgerald",
+                            category: "Fiction",
+                            isbn: "978-0-7432-7356-5",
+                            status: "Available",
+                            cover: "https://via.placeholder.com/150x200?text=The+Great+Gatsby",
+                            description: "A classic novel of the Jazz Age",
+                            publisher: "Scribner",
+                            publishedDate: "1925-04-10",
+                            pages: 180,
+                            language: "English"
+                        },
+                        {
+                            id: 2,
+                            title: "To Kill a Mockingbird",
+                            author: "Harper Lee",
+                            category: "Fiction",
+                            isbn: "978-0-06-112008-4",
+                            status: "Borrowed",
+                            cover: "https://via.placeholder.com/150x200?text=To+Kill+a+Mockingbird",
+                            description: "A novel about racial inequality",
+                            publisher: "J.B. Lippincott & Co.",
+                            publishedDate: "1960-07-11",
+                            pages: 281,
+                            language: "English"
+                        },
+                        {
+                            id: 3,
+                            title: "1984",
+                            author: "George Orwell",
+                            category: "Science Fiction",
+                            isbn: "978-0-452-28423-4",
+                            status: "Available",
+                            cover: "https://via.placeholder.com/150x200?text=1984",
+                            description: "Dystopian social science fiction novel",
+                            publisher: "Secker & Warburg",
+                            publishedDate: "1949-06-08",
+                            pages: 328,
+                            language: "English"
+                        },
+                        {
+                            id: 4,
+                            title: "Pride and Prejudice",
+                            author: "Jane Austen",
+                            category: "Romance",
+                            isbn: "978-0-14-143951-8",
+                            status: "Reserved",
+                            cover: "https://via.placeholder.com/150x200?text=Pride+Prejudice",
+                            description: "Romantic novel of manners",
+                            publisher: "T. Egerton",
+                            publishedDate: "1813-01-28",
+                            pages: 432,
+                            language: "English"
+                        },
+                        {
+                            id: 5,
+                            title: "The Hobbit",
+                            author: "J.R.R. Tolkien",
+                            category: "Fantasy",
+                            isbn: "978-0-547-92822-7",
+                            status: "Borrowed",
+                            cover: "https://via.placeholder.com/150x200?text=The+Hobbit",
+                            description: "Fantasy novel and children's book",
+                            publisher: "George Allen & Unwin",
+                            publishedDate: "1937-09-21",
+                            pages: 310,
+                            language: "English"
+                        }
+                    ];
+                    this.saveBooksToStorage(sampleBooks);
+                    return sampleBooks;
+                }
+            }
+
+            saveBooksToStorage(books) {
+                localStorage.setItem('libraryBooks', JSON.stringify(books));
+            }
+
+            setupEventListeners() {
+                // Navigation
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.handleNavigation(link);
+                    });
+                });
+
+                // Book management
+                document.getElementById('saveBookBtn').addEventListener('click', () => this.addBookFromModal());
+                document.getElementById('addBookFormPage').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.addBookFromPage();
+                });
+                document.getElementById('updateBookBtn').addEventListener('click', () => this.updateBook());
+                document.getElementById('manageBooksBtn').addEventListener('click', () => {
+                    this.showPage('book-operations');
+                });
+
+                // Search and filter
+                document.getElementById('bookSearch').addEventListener('input', () => this.filterBooks());
+                document.getElementById('categoryFilter').addEventListener('change', () => this.filterBooks());
+                document.getElementById('statusFilter').addEventListener('change', () => this.filterBooks());
+
+                // Time filter buttons
+                document.querySelectorAll('.time-filter-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.time-filter-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.currentPeriod = e.target.dataset.period;
+                        this.updateCharts();
+                    });
+                });
+
+                // Export report button
+                document.getElementById('exportReportBtn').addEventListener('click', () => {
+                    this.exportReport();
+                });
+            }
+
+            initializeCharts() {
+                this.createCategoryChart();
+                this.createStatusChart();
+                this.createBorrowingTrendsChart();
+                this.createPopularCategoriesChart();
+            }
+
+            createCategoryChart() {
+                const ctx = document.getElementById('categoryChart').getContext('2d');
+                const categoryData = this.getCategoryDistribution();
+
+                this.charts.categoryChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: categoryData.labels,
+                        datasets: [{
+                            data: categoryData.values,
+                            backgroundColor: [
+                                '#3498db', '#2ecc71', '#e74c3c', '#f39c12', 
+                                '#9b59b6', '#1abc9c', '#34495e', '#e67e22'
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.raw || 0;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = Math.round((value / total) * 100);
+                                        return `${label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            createStatusChart() {
+                const ctx = document.getElementById('statusChart').getContext('2d');
+                const statusData = this.getStatusDistribution();
+
+                this.charts.statusChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: statusData.labels,
+                        datasets: [{
+                            data: statusData.values,
+                            backgroundColor: [
+                                '#2ecc71', // Available - Green
+                                '#f39c12', // Borrowed - Orange
+                                '#3498db', // Reserved - Blue
+                                '#e74c3c'  // Maintenance - Red
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            createBorrowingTrendsChart() {
+                const ctx = document.getElementById('borrowingTrendsChart').getContext('2d');
+                const trendsData = this.getBorrowingTrends();
+
+                this.charts.borrowingTrendsChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: trendsData.labels,
+                        datasets: [{
+                            label: 'Books Borrowed',
+                            data: trendsData.values,
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    drawBorder: false
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            createPopularCategoriesChart() {
+                const ctx = document.getElementById('popularCategoriesChart').getContext('2d');
+                const popularData = this.getPopularCategories();
+
+                this.charts.popularCategoriesChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: popularData.labels,
+                        datasets: [{
+                            label: 'Borrow Count',
+                            data: popularData.values,
+                            backgroundColor: '#2ecc71',
+                            borderColor: '#27ae60',
+                            borderWidth: 1,
+                            borderRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    drawBorder: false
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            getCategoryDistribution() {
+                const categories = {};
+                this.books.forEach(book => {
+                    categories[book.category] = (categories[book.category] || 0) + 1;
+                });
+
+                return {
+                    labels: Object.keys(categories),
+                    values: Object.values(categories)
+                };
+            }
+
+            getStatusDistribution() {
+                const statusCount = {
+                    'Available': 0,
+                    'Borrowed': 0,
+                    'Reserved': 0,
+                    'Maintenance': 0
+                };
+
+                this.books.forEach(book => {
+                    statusCount[book.status] = (statusCount[book.status] || 0) + 1;
+                });
+
+                return {
+                    labels: Object.keys(statusCount),
+                    values: Object.values(statusCount)
+                };
+            }
+
+            getBorrowingTrends() {
+                // Generate sample data based on current period
+                let labels, values;
+                
+                switch(this.currentPeriod) {
+                    case 'week':
+                        labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                        values = [12, 19, 8, 15, 22, 18, 14];
+                        break;
+                    case 'month':
+                        labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+                        values = [45, 52, 38, 61];
+                        break;
+                    case 'year':
+                        labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                        values = [120, 135, 110, 145, 160, 155, 170, 165, 180, 175, 190, 185];
+                        break;
+                }
+
+                return { labels, values };
+            }
+
+            getPopularCategories() {
+                // Sample data for popular categories
+                return {
+                    labels: ['Fiction', 'Science', 'History', 'Technology', 'Biography'],
+                    values: [45, 32, 28, 22, 18]
+                };
+            }
+
+            updateCharts() {
+                // Update charts with new data based on current period
+                if (this.charts.borrowingTrendsChart) {
+                    const trendsData = this.getBorrowingTrends();
+                    this.charts.borrowingTrendsChart.data.labels = trendsData.labels;
+                    this.charts.borrowingTrendsChart.data.datasets[0].data = trendsData.values;
+                    this.charts.borrowingTrendsChart.update();
+                }
+
+                // Update other charts if needed
+                const categoryData = this.getCategoryDistribution();
+                if (this.charts.categoryChart) {
+                    this.charts.categoryChart.data.labels = categoryData.labels;
+                    this.charts.categoryChart.data.datasets[0].data = categoryData.values;
+                    this.charts.categoryChart.update();
+                }
+
+                const statusData = this.getStatusDistribution();
+                if (this.charts.statusChart) {
+                    this.charts.statusChart.data.labels = statusData.labels;
+                    this.charts.statusChart.data.datasets[0].data = statusData.values;
+                    this.charts.statusChart.update();
+                }
+            }
+
+            handleNavigation(link) {
+                // Remove active class from all links
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+
+                // Add active class to clicked link
+                link.classList.add('active');
+
+                // Show the corresponding page
+                const page = link.getAttribute('data-page');
+                this.showPage(page);
+            }
+
+            showPage(pageName) {
+                document.querySelectorAll('.page-content').forEach(page => {
+                    page.style.display = 'none';
+                });
+
+                document.getElementById(`${pageName}Page`).style.display = 'block';
+
+                if (pageName === 'books' || pageName === 'dashboard' || pageName === 'book-operations') {
+                    this.renderBooksTable();
+                    this.updateDashboard();
+                    if (pageName === 'dashboard') {
+                        this.updateCharts();
+                    }
+                }
+            }
+
+            addBookFromModal() {
+                const bookData = this.getBookFormData('modal');
+                if (bookData) {
+                    this.addBook(bookData);
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addBookModal'));
+                    modal.hide();
+                    document.getElementById('addBookForm').reset();
+                }
+            }
+
+            addBookFromPage() {
+                const bookData = this.getBookFormData('page');
+                if (bookData) {
+                    this.addBook(bookData);
+                    document.getElementById('addBookFormPage').reset();
+                    alert('Book added successfully!');
+                }
+            }
+
+            getBookFormData(type) {
+                const prefix = type === 'modal' ? '' : 'Page';
+
+                const title = document.getElementById(`bookTitle${prefix}`).value;
+                const author = document.getElementById(`bookAuthor${prefix}`).value;
+                const isbn = document.getElementById(`bookIsbn${prefix}`).value;
+                const category = document.getElementById(`bookCategory${prefix}`).value;
+                const status = document.getElementById(`bookStatus${prefix}`).value;
+                const cover = document.getElementById(`bookCover${prefix}`).value || 'https://via.placeholder.com/150x200?text=No+Image';
+
+                if (!title || !author || !isbn || !category || !status) {
+                    alert('Please fill in all required fields!');
+                    return null;
+                }
+
+                const bookData = {
+                    title,
+                    author,
+                    isbn,
+                    category,
+                    status,
+                    cover
+                };
+
+                if (type === 'page') {
+                    bookData.description = document.getElementById('bookDescriptionPage').value;
+                    bookData.publisher = document.getElementById('bookPublisherPage').value;
+                    bookData.publishedDate = document.getElementById('bookPublishedDatePage').value;
+                    bookData.pages = document.getElementById('bookPagesPage').value;
+                    bookData.language = document.getElementById('bookLanguagePage').value;
+                }
+
+                return bookData;
+            }
+
+            addBook(bookData) {
+                const newBook = {
+                    id: this.books.length > 0 ? Math.max(...this.books.map(b => b.id)) + 1 : 1,
+                    ...bookData
+                };
+
+                this.books.push(newBook);
+                this.saveBooksToStorage(this.books);
+                this.renderBooksTable();
+                this.updateDashboard();
+                this.updateCharts();
+
+                alert('Book added successfully!');
+            }
+
+            renderBooksTable() {
+                const booksTableBody = document.getElementById('booksTableBody');
+                const editBooksTableBody = document.getElementById('editBooksTableBody');
+
+                booksTableBody.innerHTML = '';
+                editBooksTableBody.innerHTML = '';
+
+                this.books.forEach(book => {
+                    const row = document.createElement('tr');
+
+                    let statusClass = '';
+                    switch (book.status) {
+                        case 'Available':
+                            statusClass = 'bg-success';
+                            break;
+                        case 'Borrowed':
+                            statusClass = 'bg-warning';
+                            break;
+                        case 'Reserved':
+                            statusClass = 'bg-info';
+                            break;
+                        case 'Maintenance':
+                            statusClass = 'bg-secondary';
+                            break;
+                    }
+
+                    // For Book Management page
+                    row.innerHTML = `
+                        <td>${book.id}</td>
+                        <td><img src="${book.cover}" alt="${book.title}" width="50"></td>
+                        <td>${book.title}</td>
+                        <td>${book.author}</td>
+                        <td>${book.category}</td>
+                        <td>${book.isbn}</td>
+                        <td><span class="badge ${statusClass}">${book.status}</span></td>
+                        <td>
+                            <div class="table-actions">
+                                <button class="btn btn-sm btn-outline-primary edit-book" data-id="${book.id}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger delete-book" data-id="${book.id}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+
+                    booksTableBody.appendChild(row);
+
+                    // For Edit/Delete page
+                    const editRow = document.createElement('tr');
+                    editRow.innerHTML = `
+                        <td>${book.id}</td>
+                        <td><img src="${book.cover}" alt="${book.title}" width="50"></td>
+                        <td>${book.title}</td>
+                        <td>${book.author}</td>
+                        <td>${book.category}</td>
+                        <td>${book.isbn}</td>
+                        <td><span class="badge ${statusClass}">${book.status}</span></td>
+                        <td>
+                            <div class="table-actions">
+                                <button class="btn btn-sm btn-outline-primary edit-book" data-id="${book.id}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger delete-book" data-id="${book.id}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+
+                    editBooksTableBody.appendChild(editRow);
+                });
+
+                // Add event listeners to edit and delete buttons
+                document.querySelectorAll('.edit-book').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const bookId = parseInt(e.currentTarget.getAttribute('data-id'));
+                        this.editBook(bookId);
+                    });
+                });
+
+                document.querySelectorAll('.delete-book').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const bookId = parseInt(e.currentTarget.getAttribute('data-id'));
+                        this.deleteBook(bookId);
+                    });
+                });
+            }
+
+            editBook(id) {
+                const book = this.books.find(b => b.id === id);
+                if (book) {
+                    document.getElementById('editBookId').value = book.id;
+                    document.getElementById('editBookTitle').value = book.title;
+                    document.getElementById('editBookAuthor').value = book.author;
+                    document.getElementById('editBookIsbn').value = book.isbn;
+                    document.getElementById('editBookCategory').value = book.category;
+                    document.getElementById('editBookStatus').value = book.status;
+                    document.getElementById('editBookCover').value = book.cover;
+                    document.getElementById('editBookDescription').value = book.description || '';
+
+                    const editModal = new bootstrap.Modal(document.getElementById('editBookModal'));
+                    editModal.show();
+                }
+            }
+
+            updateBook() {
+                const id = parseInt(document.getElementById('editBookId').value);
+                const book = this.books.find(b => b.id === id);
+
+                if (book) {
+                    book.title = document.getElementById('editBookTitle').value;
+                    book.author = document.getElementById('editBookAuthor').value;
+                    book.isbn = document.getElementById('editBookIsbn').value;
+                    book.category = document.getElementById('editBookCategory').value;
+                    book.status = document.getElementById('editBookStatus').value;
+                    book.cover = document.getElementById('editBookCover').value || 'https://via.placeholder.com/150x200?text=No+Image';
+                    book.description = document.getElementById('editBookDescription').value;
+
+                    this.saveBooksToStorage(this.books);
+                    this.renderBooksTable();
+                    this.updateDashboard();
+                    this.updateCharts();
+
+                    const editModal = bootstrap.Modal.getInstance(document.getElementById('editBookModal'));
+                    editModal.hide();
+
+                    alert('Book updated successfully!');
+                }
+            }
+
+            deleteBook(id) {
+                if (confirm('Are you sure you want to delete this book?')) {
+                    this.books = this.books.filter(book => book.id !== id);
+                    this.saveBooksToStorage(this.books);
+                    this.renderBooksTable();
+                    this.updateDashboard();
+                    this.updateCharts();
+
+                    alert('Book deleted successfully!');
+                }
+            }
+
+            filterBooks() {
+                const searchTerm = document.getElementById('bookSearch').value.toLowerCase();
+                const categoryValue = document.getElementById('categoryFilter').value;
+                const statusValue = document.getElementById('statusFilter').value;
+
+                const filteredBooks = this.books.filter(book => {
+                    const matchesSearch = book.title.toLowerCase().includes(searchTerm) ||
+                        book.author.toLowerCase().includes(searchTerm) ||
+                        book.isbn.includes(searchTerm);
+                    const matchesCategory = !categoryValue || book.category === categoryValue;
+                    const matchesStatus = !statusValue || book.status === statusValue;
+
+                    return matchesSearch && matchesCategory && matchesStatus;
+                });
+
+                this.renderFilteredBooksTable(filteredBooks);
+            }
+
+            renderFilteredBooksTable(filteredBooks) {
+                const booksTableBody = document.getElementById('booksTableBody');
+                booksTableBody.innerHTML = '';
+
+                filteredBooks.forEach(book => {
+                    const row = document.createElement('tr');
+
+                    let statusClass = '';
+                    switch (book.status) {
+                        case 'Available':
+                            statusClass = 'bg-success';
+                            break;
+                        case 'Borrowed':
+                            statusClass = 'bg-warning';
+                            break;
+                        case 'Reserved':
+                            statusClass = 'bg-info';
+                            break;
+                        case 'Maintenance':
+                            statusClass = 'bg-secondary';
+                            break;
+                    }
+
+                    row.innerHTML = `
+                        <td>${book.id}</td>
+                        <td><img src="${book.cover}" alt="${book.title}" width="50"></td>
+                        <td>${book.title}</td>
+                        <td>${book.author}</td>
+                        <td>${book.category}</td>
+                        <td>${book.isbn}</td>
+                        <td><span class="badge ${statusClass}">${book.status}</span></td>
+                        <td>
+                            <div class="table-actions">
+                                <button class="btn btn-sm btn-outline-primary edit-book" data-id="${book.id}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger delete-book" data-id="${book.id}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+
+                    booksTableBody.appendChild(row);
+                });
+
+                // Add event listeners to edit and delete buttons
+                document.querySelectorAll('.edit-book').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const bookId = parseInt(e.currentTarget.getAttribute('data-id'));
+                        this.editBook(bookId);
+                    });
+                });
+
+                document.querySelectorAll('.delete-book').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const bookId = parseInt(e.currentTarget.getAttribute('data-id'));
+                        this.deleteBook(bookId);
+                    });
+                });
+            }
+
+            updateDashboard() {
+                // Update total books count
+                document.getElementById('totalBooksCount').textContent = this.books.length;
+
+                // Calculate borrowed books count
+                const borrowedBooks = this.books.filter(book => book.status === 'Borrowed').length;
+                document.getElementById('borrowedBooksCount').textContent = borrowedBooks;
+
+                // Update recent activity
+                this.updateRecentActivity();
+
+                // Update popular books
+                this.updatePopularBooks();
+            }
+
+            updateRecentActivity() {
+                const recentActivityBody = document.getElementById('recentActivityBody');
+                const activities = [
+                    { user: "John Doe", action: "Borrowed", book: "The Great Gatsby", date: "2023-04-15" },
+                    { user: "Jane Smith", action: "Returned", book: "To Kill a Mockingbird", date: "2023-04-14" },
+                    { user: "Robert Johnson", action: "Reserved", book: "1984", date: "2023-04-13" }
+                ];
+
+                recentActivityBody.innerHTML = '';
+                activities.forEach(activity => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${activity.user}</td>
+                        <td>${activity.action}</td>
+                        <td>${activity.book}</td>
+                        <td>${activity.date}</td>
+                    `;
+                    recentActivityBody.appendChild(row);
+                });
+            }
+
+            updatePopularBooks() {
+                const popularBooksList = document.getElementById('popularBooksList');
+                const popularBooks = [
+                    { title: "The Great Gatsby", count: 24 },
+                    { title: "1984", count: 19 },
+                    { title: "To Kill a Mockingbird", count: 17 },
+                    { title: "Pride and Prejudice", count: 15 },
+                    { title: "The Catcher in the Rye", count: 12 }
+                ];
+
+                popularBooksList.innerHTML = '';
+                popularBooks.forEach(book => {
+                    const item = document.createElement('li');
+                    item.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    item.innerHTML = `
+                        ${book.title}
+                        <span class="badge bg-primary rounded-pill">${book.count}</span>
+                    `;
+                    popularBooksList.appendChild(item);
+                });
+            }
+
+            exportReport() {
+                // In a real application, this would generate and download a report
+                alert('Report exported successfully! This would download a PDF report in a real application.');
+            }
+        }
+
+        // Initialize the application
+        const bookManager = new BookManager();
+
+        // Make bookManager globally available
+        window.bookManager = bookManager;
+    </script>
+</body>
+
+</html>
